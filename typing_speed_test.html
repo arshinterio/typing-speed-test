@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Typing Speed Test • Offline</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#6ee7b7;
+      --accent-2:#93c5fd;
+      --danger:#fecaca;
+      --glass: rgba(255,255,255,0.6);
+      --shadow: 0 8px 30px rgba(16,24,40,0.08);
+      --radius:14px;
+      --glass-border: rgba(99,102,241,0.08);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, #eef2ff 0%, #f6f8fb 100%);
+      display:flex;align-items:center;justify-content:center;
+      color:#0f172a;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px;
+    }
+
+    .wrap{
+      width:100%;max-width:920px;background:var(--card);border-radius:18px;padding:28px;box-shadow:var(--shadow);
+      border:1px solid var(--glass-border);
+      display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;
+    }
+
+    @media (max-width:900px){
+      .wrap{grid-template-columns:1fr;}
+    }
+
+    header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#083344;font-weight:700;box-shadow:0 6px 18px rgba(99,102,241,0.12)}
+    .title{font-size:18px;font-weight:700}
+    .subtitle{font-size:13px;color:var(--muted);margin-top:2px}
+
+    .main{
+      padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));min-height:360px;display:flex;flex-direction:column;gap:14px;border:1px solid rgba(15,23,42,0.03)
+    }
+
+    .sentence-card{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;border-radius:12px;background:#fbfdff;border:1px dashed rgba(15,23,42,0.03);overflow:auto}
+    .sentence{font-size:20px;line-height:1.8;max-width:76ch;color:#0b1220;padding:6px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .btn{padding:10px 14px;border-radius:10px;background:#111827;color:#fff;border:none;cursor:pointer;font-weight:600}
+    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(15,23,42,0.06)}
+
+    .stats{display:flex;flex-direction:column;gap:12px}
+    .stat{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(15,23,42,0.03)}
+    .stat h4{margin:0;font-size:13px;color:var(--muted)}
+    .stat strong{font-size:20px}
+
+    .right{
+      position:relative;display:flex;flex-direction:column;gap:12px
+    }
+
+    .panel{padding:14px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(15,23,42,0.03)}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type=number],select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);font-size:15px}
+
+    .hidden-input{position:absolute;left:-9999px;opacity:0}
+
+    .char{padding:2px 2px;border-radius:4px}
+    .char.correct{background:rgba(16,185,129,0.12);color:#046b3a}
+    .char.wrong{background:rgba(239,68,68,0.08);color:#991b1b;text-decoration:line-through}
+    .char.current{text-decoration:underline dashed;}
+
+    .footer{display:flex;gap:10px;align-items:center;justify-content:space-between}
+
+    .result-overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.35), rgba(2,6,23,0.55));display:flex;align-items:center;justify-content:center;border-radius:14px;backdrop-filter: blur(6px);}
+    .result-card{width:94%;max-width:540px;background:var(--card);padding:20px;border-radius:14px;box-shadow:0 14px 40px rgba(2,6,23,0.32);text-align:center}
+    .result-card h2{margin:0 0 8px 0}
+    .result-grid{display:flex;gap:12px;justify-content:space-around;margin:16px 0}
+    .result-item{background:#fafafa;padding:12px;border-radius:10px;min-width:120px}
+
+    .small{font-size:12px;color:var(--muted)}
+
+    .best{display:flex;gap:8px;align-items:center;justify-content:space-between}
+
+    /* nice touch for mobile */
+    @media (max-width:520px){
+      .sentence{font-size:18px}
+      .wrap{padding:14px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application">
+    <div>
+      <header>
+        <div class="logo">TS</div>
+        <div>
+          <div class="title">Typing Speed Test</div>
+          <div class="subtitle">60s challenge — Friendly, offline & single-file</div>
+        </div>
+      </header>
+
+      <div class="main">
+        <div class="controls">
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="small" style="margin:0 8px 0 0">Duration</label>
+            <select id="durationSelect" aria-label="duration select">
+              <option value="15">15s</option>
+              <option value="30">30s</option>
+              <option value="45">45s</option>
+              <option value="60" selected>60s</option>
+              <option value="90">90s</option>
+            </select>
+          </div>
+
+          <button class="btn" id="startBtn">Start</button>
+          <button class="btn ghost" id="restartBtn">Restart</button>
+          <div style="margin-left:auto;color:var(--muted);font-size:13px">Tip: Click the sentence area to focus and start typing.</div>
+        </div>
+
+        <div class="sentence-card" id="sentenceCard" tabindex="0">
+          <div class="sentence" id="sentenceArea" aria-live="polite"></div>
+        </div>
+
+        <div class="footer" style="margin-top:6px">
+          <div class="small">Type accurately — backspace supported. Paste is blocked for fairness.</div>
+          <div class="small">Best: <span id="bestStats">—</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="stat" style="min-width:160px">
+          <h4>Timer</h4>
+          <strong id="timer">60s</strong>
+        </div>
+        <div class="stat" style="min-width:160px">
+          <h4>WPM</h4>
+          <strong id="wpm">0</strong>
+        </div>
+        <div class="stat" style="min-width:160px">
+          <h4>Accuracy</h4>
+          <strong id="accuracy">100%</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <aside class="right">
+      <div class="panel">
+        <h4 style="margin:0 0 8px 0">Live Stats</h4>
+        <div class="stats">
+          <div class="stat"><h4>Characters Typed</h4><strong id="charsTyped">0</strong></div>
+          <div class="stat"><h4>Correct Characters</h4><strong id="correctChars">0</strong></div>
+          <div class="stat"><h4>Wrong Characters</h4><strong id="wrongChars">0</strong></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h4 style="margin:0 0 8px 0">Settings</h4>
+        <label>Auto new sentence</label>
+        <select id="autoNew">
+          <option value="true" selected>Yes (when you finish sentence)</option>
+          <option value="false">No (manual)</option>
+        </select>
+        <div style="height:10px"></div>
+        <button class="btn" id="copyBtn">Copy current sentence</button>
+      </div>
+
+      <div class="panel">
+        <h4 style="margin:0 0 8px 0">Best Scores (Local)</h4>
+        <div class="best"><div class="small">Best WPM</div><strong id="bestWpm">—</strong></div>
+        <div style="height:8px"></div>
+        <div class="best"><div class="small">Best Accuracy</div><strong id="bestAcc">—</strong></div>
+      </div>
+
+    </aside>
+
+    <!-- hidden input to capture typing -->
+    <textarea id="hiddenInput" class="hidden-input" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus></textarea>
+
+    <!-- result overlay -->
+    <div id="resultOverlay" class="result-overlay" style="display:none">
+      <div class="result-card" role="dialog" aria-modal="true">
+        <h2>Time's up!</h2>
+        <div class="small">Great effort — here's how you did.</div>
+
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="small">WPM</div>
+            <strong id="resWpm">0</strong>
+          </div>
+          <div class="result-item">
+            <div class="small">Accuracy</div>
+            <strong id="resAcc">0%</strong>
+          </div>
+          <div class="result-item">
+            <div class="small">Characters</div>
+            <strong id="resChars">0</strong>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn" id="tryAgain">Try Again</button>
+          <button class="btn ghost" id="closeOverlay">Close</button>
+        </div>
+        <div style="margin-top:10px" class="small">Press <strong>Enter</strong> to restart.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function(){
+    // --- sample sentences (20+) ---
+    const sentences = [
+      "The quick brown fox jumps over the lazy dog.",
+      "Design is intelligence made visible in every corner of the home.",
+      "Small steps every day lead to big changes over time.",
+      "Practice typing to increase speed and reduce mistakes.",
+      "A tidy room helps the mind think more clearly and calmly.",
+      "Modern design blends function with simplicity and warmth.",
+      "Creativity is the result of curiosity mixed with courage.",
+      "Good lighting can transform a space from ordinary to magical.",
+      "Measure twice and cut once — a classic rule for careful work.",
+      "Keep learning — the world changes quickly, and so should your skills.",
+      "Coffee and music often accompany long creative sessions.",
+      "The city woke up slowly as the sun painted the streets in gold.",
+      "Efficiency is doing things right; effectiveness is doing the right things.",
+      "Simplicity is the ultimate sophistication in both design and life.",
+      "Practice makes progress, not perfection — and that is enough.",
+      "Every new project begins with a single confident step.",
+      "Typing tests are a fun way to sharpen focus and precision.",
+      "Your best results come when you combine effort with smart choices.",
+      "A good plan today is better than a perfect plan tomorrow.",
+      "In design, constraints often lead to the most creative solutions.",
+      "Small details define the character of a well-crafted interior.",
+      "Learning from mistakes is the fastest way to improve performance.",
+      "When in doubt, declutter — both your space and your mind.",
+      "The rhythm of typing is the heartbeat of focused work."
+    ];
+
+    // DOM refs
+    const sentenceArea = document.getElementById('sentenceArea');
+    const hiddenInput = document.getElementById('hiddenInput');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const durationSelect = document.getElementById('durationSelect');
+    const timerEl = document.getElementById('timer');
+    const wpmEl = document.getElementById('wpm');
+    const accuracyEl = document.getElementById('accuracy');
+    const charsTypedEl = document.getElementById('charsTyped');
+    const correctCharsEl = document.getElementById('correctChars');
+    const wrongCharsEl = document.getElementById('wrongChars');
+    const resultOverlay = document.getElementById('resultOverlay');
+    const resWpm = document.getElementById('resWpm');
+    const resAcc = document.getElementById('resAcc');
+    const resChars = document.getElementById('resChars');
+    const tryAgain = document.getElementById('tryAgain');
+    const closeOverlay = document.getElementById('closeOverlay');
+    const sentenceCard = document.getElementById('sentenceCard');
+    const autoNew = document.getElementById('autoNew');
+    const copyBtn = document.getElementById('copyBtn');
+    const bestWpmEl = document.getElementById('bestWpm');
+    const bestAccEl = document.getElementById('bestAcc');
+    const bestStats = document.getElementById('bestStats');
+
+    // state
+    let target = '';
+    let chars = []; // array of spans
+    let timer = null;
+    let timeLeft = parseInt(durationSelect.value,10) || 60;
+    let started = false;
+    let startTime = null;
+    let elapsed = 0;
+    let totalTyped = 0;
+    let correctTyped = 0;
+    let wrongTyped = 0;
+    let currentIndex = 0;
+    let duration = timeLeft;
+
+    // localStorage keys
+    const KEY_WPM = 'typing_best_wpm_offline';
+    const KEY_ACC = 'typing_best_acc_offline';
+
+    function loadBests(){
+      const bw = localStorage.getItem(KEY_WPM);
+      const ba = localStorage.getItem(KEY_ACC);
+      bestWpmEl.textContent = bw ? bw : '—';
+      bestAccEl.textContent = ba ? ba + '%' : '—';
+      bestStats.textContent = (bw && ba) ? `${bw} WPM • ${ba}%` : '—';
+    }
+
+    function saveBests(wpm,acc){
+      const bw = parseFloat(localStorage.getItem(KEY_WPM) || 0);
+      const ba = parseFloat(localStorage.getItem(KEY_ACC) || 0);
+      if(wpm > bw) localStorage.setItem(KEY_WPM, Math.round(wpm));
+      if(acc > ba) localStorage.setItem(KEY_ACC, Math.round(acc));
+      loadBests();
+    }
+
+    function pickSentence(){
+      // random pick
+      target = sentences[Math.floor(Math.random()*sentences.length)];
+      renderSentence();
+    }
+
+    function renderSentence(){
+      sentenceArea.innerHTML = '';
+      chars = [];
+      for(let i=0;i<target.length;i++){
+        const sp = document.createElement('span');
+        sp.className = 'char';
+        sp.textContent = target[i];
+        sp.dataset.index = i;
+        sentenceArea.appendChild(sp);
+        chars.push(sp);
+      }
+      currentIndex = 0; totalTyped=0; correctTyped=0; wrongTyped=0;
+      updateStats();
+      setCurrent();
+    }
+
+    function setCurrent(){
+      chars.forEach(c=>c.classList.remove('current'));
+      if(chars[currentIndex]) chars[currentIndex].classList.add('current');
+      // scroll into view if needed
+      const cur = chars[currentIndex];
+      if(cur){
+        const rect = cur.getBoundingClientRect();
+        const parentRect = sentenceArea.getBoundingClientRect();
+        if(rect.right > parentRect.right || rect.left < parentRect.left){
+          cur.scrollIntoView({behavior:'smooth',inline:'center'});
+        }
+      }
+    }
+
+    function start(count){
+      if(started) return;
+      duration = parseInt(count||durationSelect.value,10) || 60;
+      timeLeft = duration;
+      started = true; startTime = Date.now();
+      hiddenInput.focus();
+      startBtn.disabled = true;
+      durationSelect.disabled = true;
+      // tick
+      timerEl.textContent = timeLeft + 's';
+      timer = setInterval(()=>{
+        timeLeft--;
+        timerEl.textContent = timeLeft + 's';
+        updateLiveWpm();
+        if(timeLeft<=0){
+          end();
+        }
+      },1000);
+    }
+
+    function end(){
+      if(!started) return;
+      started=false; clearInterval(timer); startBtn.disabled=false; durationSelect.disabled=false;
+      // compute final values
+      const secsElapsed = duration - timeLeft;
+      const minutes = (secsElapsed>0)?(secsElapsed/60): (duration/60);
+      const words = correctTyped/5;
+      const wpm = minutes>0? Math.round(words / minutes) : 0;
+      const acc = totalTyped>0? Math.max(0, Math.round((correctTyped/totalTyped)*100)) : 100;
+      // show overlay
+      resWpm.textContent = wpm;
+      resAcc.textContent = acc + '%';
+      resChars.textContent = totalTyped;
+      resultOverlay.style.display = 'flex';
+      saveBests(wpm,acc);
+      updateLiveWpm();
+    }
+
+    function resetAll(){
+      // reset state
+      clearInterval(timer); started=false; startBtn.disabled=false; durationSelect.disabled=false;
+      timeLeft = parseInt(durationSelect.value,10)||60; timerEl.textContent = timeLeft + 's';
+      wpmEl.textContent = '0'; accuracyEl.textContent = '100%';
+      totalTyped=0;correctTyped=0;wrongTyped=0;currentIndex=0;updateStats();
+      pickSentence();
+      resultOverlay.style.display='none';
+      hiddenInput.value = '';
+    }
+
+    function updateStats(){
+      charsTypedEl.textContent = totalTyped;
+      correctCharsEl.textContent = correctTyped;
+      wrongCharsEl.textContent = wrongTyped;
+      accuracyEl.textContent = totalTyped>0? Math.max(0, Math.round((correctTyped/totalTyped)*100)) + '%' : '100%';
+    }
+
+    function updateLiveWpm(){
+      const passed = (duration - timeLeft);
+      const minutes = passed/60;
+      const words = correctTyped/5;
+      const wpm = minutes>0? Math.round(words / minutes) : (passed===0?0: Math.round(words/(passed/60)) );
+      wpmEl.textContent = isFinite(wpm)? wpm : 0;
+    }
+
+    // input handling
+    hiddenInput.addEventListener('input', ()=>{
+      if(!started){
+        // if not started and there's input, start the timer
+        start(durationSelect.value);
+      }
+      const val = hiddenInput.value;
+      // block pasting by comparing length change >1
+      if(Math.abs(val.length - totalTyped) > 1){
+        // likely paste or selection replace — ignore and reset input to typed substring
+        hiddenInput.value = val.slice(0, totalTyped);
+        return;
+      }
+      // determine typed char change
+      if(val.length > totalTyped){
+        // new char added
+        const ch = val[val.length-1];
+        typeChar(ch);
+      } else if(val.length < totalTyped){
+        backspace();
+      }
+    });
+
+    hiddenInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Tab') e.preventDefault();
+      if(!started && (e.key.length === 1 || e.key === 'Backspace')){
+        // start on first typing
+        // handled in input
+      }
+      // when ended and Enter pressed => restart
+      if(!started && resultOverlay.style.display==='flex' && e.key === 'Enter'){
+        resetAll(); hiddenInput.focus();
+      }
+    });
+
+    function typeChar(ch){
+      // compare with target at currentIndex
+      const expected = target[currentIndex] || '';
+      totalTyped++;
+      if(ch === expected){
+        chars[currentIndex].classList.remove('wrong');
+        chars[currentIndex].classList.add('correct');
+        correctTyped++;
+      } else {
+        chars[currentIndex].classList.remove('correct');
+        chars[currentIndex].classList.add('wrong');
+        wrongTyped++;
+      }
+      currentIndex++;
+      setCurrent();
+      updateStats();
+      updateLiveWpm();
+
+      // if finished sentence
+      if(currentIndex >= target.length){
+        if(autoNew.value==='true'){
+          pickSentence(); hiddenInput.value='';
+        } else {
+          // keep input length at target length (user can press restart or start new sentence)
+          hiddenInput.value = '';
+        }
+      }
+    }
+
+    function backspace(){
+      if(totalTyped === 0) return;
+      // user removed last typed char
+      // move index back
+      if(currentIndex>0) currentIndex--;
+      // check previous char state
+      const prev = chars[currentIndex];
+      // decrement totals accordingly
+      // We cannot know if previous was correct or wrong by comparing classes
+      if(prev.classList.contains('correct')){ correctTyped = Math.max(0, correctTyped-1); prev.classList.remove('correct'); }
+      if(prev.classList.contains('wrong')){ wrongTyped = Math.max(0, wrongTyped-1); prev.classList.remove('wrong'); }
+      totalTyped = Math.max(0, totalTyped-1);
+      setCurrent(); updateStats(); updateLiveWpm();
+    }
+
+    // prevent paste
+    hiddenInput.addEventListener('paste', (e)=>{ e.preventDefault(); });
+
+    // focus handling: click sentence area to focus hidden input
+    sentenceCard.addEventListener('click', ()=>{ hiddenInput.focus(); });
+
+    // start/restart buttons
+    startBtn.addEventListener('click', ()=>{
+      if(!started){ start(durationSelect.value); hiddenInput.focus(); }
+    });
+    restartBtn.addEventListener('click', ()=>{ resetAll(); hiddenInput.focus(); });
+    tryAgain.addEventListener('click', ()=>{ resetAll(); hiddenInput.focus(); });
+    closeOverlay.addEventListener('click', ()=>{ resultOverlay.style.display='none'; hiddenInput.focus(); });
+
+    // keyboard Enter to restart when overlay visible
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && resultOverlay.style.display==='flex'){
+        e.preventDefault(); resetAll(); hiddenInput.focus();
+      }
+    });
+
+    // copy current sentence
+    copyBtn.addEventListener('click', ()=>{
+      navigator.clipboard && navigator.clipboard.writeText? navigator.clipboard.writeText(target).then(()=>{
+        copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy current sentence',900);
+      }).catch(()=>{
+        // fallback
+        const ta = document.createElement('textarea'); ta.value=target; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); copyBtn.textContent='Copied!';}catch(e){} ta.remove(); setTimeout(()=>copyBtn.textContent='Copy current sentence',900);
+      }) : alert('Copy not supported');
+    });
+
+    // expose initial values
+    durationSelect.addEventListener('change', ()=>{ timerEl.textContent = durationSelect.value + 's'; });
+
+    // initialize
+    pickSentence(); loadBests(); timerEl.textContent = durationSelect.value + 's';
+
+    // accessibility: allow clicking on result overlay to close
+    resultOverlay.addEventListener('click', (e)=>{ if(e.target === resultOverlay) resultOverlay.style.display='none'; });
+
+    // make sure hidden input is focused on load for convenience
+    setTimeout(()=>{ hiddenInput.focus(); },400);
+
+  })();
+  </script>
+</body>
+</html>
